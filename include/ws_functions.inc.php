@@ -12,20 +12,28 @@
  */
 function ws_isInvokeAllowed($res, $methodName, $params)
 {
-  global $conf;
+  global $conf, $user;
 
   if ( strpos($methodName,'reflection.')===0 )
   { // OK for reflection
     return $res;
   }
 
+// CUSTOM BEGIN
   if ( !is_autorize_status(ACCESS_GUEST) and
-      strpos($methodName,'pwg.session.')!==0 and
-      'pwg.images.uploadAsync'!=$methodName )
+      strpos($methodName,'pwg.session.')!==0 and 
+      'pwg.images.uploadAsync'!=$methodName)
   {
     return new PwgError(401, 'Access denied');
   }
 
+  if (!group_approved($user['id']) and
+      strpos($methodName,'pwg.session.')!==0 and 
+      'pwg.images.uploadAsync'!=$methodName)
+  {
+    return new PwgError(401, 'Access denied');
+  }
+// CUSTOM END
   return $res;
 }
 

@@ -237,6 +237,10 @@ SELECT id
       $keyargs_content = array(
         get_l10n_args('Hello %s,', stripslashes($login)),
         get_l10n_args('Thank you for registering at %s!', $conf['gallery_title']),
+// CUSTOM BEGIN
+        get_l10n_args('', ''),
+        get_l10n_args('Sobald dich einer der Administratoren händisch freigeschalten hat, kannst du Fotos ansehen und Eigene hochladen.'),
+// CUSTOM END
         get_l10n_args('', ''),
         get_l10n_args('Here are your connection settings', ''),
         get_l10n_args('', ''),
@@ -247,7 +251,36 @@ SELECT id
         get_l10n_args('', ''),
         get_l10n_args('If you think you\'ve received this email in error, please contact us at %s', get_webmaster_mail_address()),
         );
+// CUSTOM BEGIN
+      pwg_mail(
+        $mail_address,
+        array(
+          'subject' => '['.$conf['gallery_title'].'] '.l10n('Registration'),
+          'content' => l10n_args($keyargs_content),
+          'content_format' => 'text/plain',
+          )
+        );
+    }
 
+    else if (email_check_format($mail_address))
+    {
+      include_once(PHPWG_ROOT_PATH.'include/functions_mail.inc.php');
+
+      $keyargs_content = array(
+        get_l10n_args('Hello %s,', stripslashes($login)),
+        get_l10n_args('Thank you for registering at %s!', $conf['gallery_title']),
+        get_l10n_args('', ''),
+        get_l10n_args('Sobald dich einer der Administratoren händisch freigeschalten hat, kannst du Fotos ansehen und Eigene hochladen.'),
+        get_l10n_args('', ''),
+        get_l10n_args('Here are your connection settings', ''),
+        get_l10n_args('', ''),
+        get_l10n_args('Link: %s', get_absolute_root_url()),
+        get_l10n_args('Username: %s', stripslashes($login)),
+        get_l10n_args('Email: %s', $mail_address),
+        get_l10n_args('', ''),
+        get_l10n_args('If you think you\'ve received this email in error, please contact us at %s', get_webmaster_mail_address()),
+        );
+// CUSTOM END
       pwg_mail(
         $mail_address,
         array(
@@ -915,7 +948,15 @@ WHERE '.$conf['user_fields']['id'].' = '.$user_id;
 function log_user($user_id, $remember_me)
 {
   global $conf, $user;
-
+// CUSTOM BEGIN
+  $arr_cookie_options = array (
+                'expires' => time() + $conf['remember_me_length'],
+                'path' => cookie_path(),
+                'domain' => ini_get('session.cookie_domain'),
+                'secure' => ini_get('session.cookie_secure'),     // or false
+                'httponly' => ini_get('session.cookie_httponly'),    // or false
+                'samesite' => 'Strict' // None || Lax  || Strict
+                );
   if ($remember_me and $conf['authorize_remembering'])
   {
     $now = time();
@@ -923,12 +964,16 @@ function log_user($user_id, $remember_me)
     if ($key!==false)
     {
       $cookie = $user_id.'-'.$now.'-'.$key;
+      setcookie($conf['remember_me_name'], $cookie, $arr_cookie_options); 
+      /*
       setcookie($conf['remember_me_name'],
         $cookie,
         time()+$conf['remember_me_length'],
         cookie_path(),ini_get('session.cookie_domain'),ini_get('session.cookie_secure'),
         ini_get('session.cookie_httponly')
         );
+        */
+// CUSTOM END
     }
   }
   else
@@ -942,7 +987,7 @@ function log_user($user_id, $remember_me)
   }
   else
   {
-    session_start();
+    session_start($arr_cookie_options); // CUSTOM
   }
   $_SESSION['pwg_uid'] = (int)$user_id;
 
@@ -1280,6 +1325,40 @@ function check_status($access_type, $user_status='')
   }
 }
 
+// CUSTOM BEGIN
+/**
+ * Abord script if user has no access to community upload (not approved)
+ * 
+ * @param int $user_id
+ */
+function abort_if_not_approved($user_id)
+{
+  if (!group_approved($user_id)) {
+    access_denied();
+  }
+}
+
+/**
+ * Check if user has access to community upload (approved)
+ * 
+ * @param int $user_id
+ */
+function group_approved($user_id)
+{
+    $query = '
+    SELECT group_id
+      FROM '.USER_GROUP_TABLE.'
+      WHERE user_id = '.$user_id.' AND group_id = 1
+    ;';
+    $result = query2array($query,null, 'group_id');
+    
+  if (!isset($result[0]) || $result[0] != 1) {
+    return false;
+  }
+  return true;
+}
+// CUSTOM END
+
 /**
  * Returns if user is generic.
  *
@@ -1323,6 +1402,33 @@ function is_admin($user_status='')
 {
   return is_autorize_status(ACCESS_ADMINISTRATOR, $user_status);
 }
+
+// CUSTOM BEGIN
+/**
+ * Returns if user is, at least, an administrator or authorized for the given album via community plugin.
+ *
+ * @param string $user_status used if $user not initialized
+ * @return bool
+ */
+function is_admin_or_community_authorized($album, $user_status='')
+{
+  include_once(COMMUNITY_PATH.'include/functions_community.inc.php');
+
+  global $user;
+  $user_permissions = community_get_user_permissions($user['id']);
+      #error_log('user permissions are: '.implode(';', $user_permissions['upload_categories']).' and asked permission for: '.$album);
+  if (isset($album) and in_array($album, $user_permissions['upload_categories'])) {
+    $cat_name = get_cat_display_name_cache_from_id($album);
+    #error_log('username is '.$user['username']);
+    if (strpos($cat_name, $user['username']) !== false) {
+      return true;
+    }
+  }
+  else {
+    return is_autorize_status(ACCESS_ADMINISTRATOR, $user_status);
+  }
+}
+// CUSTOM END
 
 /**
  * Returns if user is a webmaster.

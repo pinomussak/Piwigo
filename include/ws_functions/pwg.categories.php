@@ -164,11 +164,11 @@ SELECT SQL_CALC_FOUND_ROWS i.*, GROUP_CONCAT(category_id) AS cat_ids
  *    @option bool public
  *    @option bool tree_output
  *    @option bool fullname
+ *    @option bool community_upload // CUSTOM
  */
 function ws_categories_getList($params, &$service)
 {
   global $user, $conf;
-
   if (!in_array($params['thumbnail_size'], array_keys(ImageStdParams::get_defined_type_map())))
   {
     return new PwgError(WS_ERR_INVALID_PARAM, "Invalid thumbnail_size");
@@ -249,6 +249,15 @@ SELECT
     {
       $row[$key] = (int)$row[$key];
     }
+
+// CUSTOM BEGIN
+    if ($params['community_upload']) {
+      $row['name'] = strip_tags(get_cat_display_name_cache($row['uppercats'], null));
+      if (strpos($row['name'], $user['username']) == false) {
+        continue;
+      }
+    }
+// CUSTOM END
 
     if ($params['fullname'])
     {
@@ -474,6 +483,8 @@ SELECT id, path, representative_ext
  */
 function ws_categories_getAdminList($params, &$service)
 {
+#error_log("ws_categories_getList for: ".implode(";",$params));
+#error_log("ping");
   $query = '
 SELECT category_id, COUNT(*) AS counter
   FROM '. IMAGE_CATEGORY_TABLE .'
@@ -540,7 +551,14 @@ SELECT id, name, comment, uppercats, global_rank, dir, status
  */
 function ws_categories_add($params, &$service)
 {
+  global $user;
   include_once(PHPWG_ROOT_PATH.'admin/include/functions.php');
+
+  if (isset($params['parent']) && !is_admin_or_community_authorized($params['parent']))
+  {
+    #error_log('Access denied for user '.$user['id']);
+    return new PwgError(403, 'Not authorized for this album.');
+  }
 
   $options = array();
   if (!empty($params['status']) and in_array($params['status'], array('private','public')))
@@ -564,6 +582,8 @@ function ws_categories_add($params, &$service)
   {
     return new PwgError(500, $creation_output['error']);
   }
+  
+  single_insert(GROUP_ACCESS_TABLE, array('group_id' => 1, 'cat_id' => $creation_output['id']));
 
   invalidate_user_cache();
 
@@ -695,6 +715,70 @@ SELECT *
     );
 
   $info_columns = array('name', 'comment',);
+
+  $perform_update = false;
+  foreach ($info_columns as $key)
+  {
+    if (isset($params[$key]))
+    {
+      $perform_update = true;
+      // TODO do not strip tags if pwg_token is provided (and valid)
+      $update[$key] = strip_tags($params[$key]);
+    }
+  }
+
+  if ($perform_update)
+  {
+    single_update(
+      CATEGORIES_TABLE,
+      $update,
+      array('id' => $update['id'])
+      );
+  }
+
+  pwg_activity('album', $params['category_id'], 'edit', array('fields' => implode(',', array_keys($update))));
+}
+
+/**
+ * API method
+ * Sets name of a category
+ * @param mixed[] $params
+ *    @option int cat_id
+ *    @option string name (optional)
+ */
+function ws_categories_setName($params, &$service)
+{
+  if (!isset($params['category_id']) || !is_admin_or_community_authorized($params['category_id']))
+  {
+    return new PwgError(401, 'Not authorized for this album.');
+  }
+  // does the category really exist?
+  $query = '
+SELECT *
+  FROM '.CATEGORIES_TABLE.'
+  WHERE id = '.$params['category_id'].'
+;';
+  $categories = query2array($query);
+  if (count($categories) == 0)
+  {
+    return new PwgError(404, 'category_id not found');
+  }
+
+  $category = $categories[0];
+
+  if (!empty($params['status']))
+  {
+    if (!in_array($params['status'], array('private','public')))
+    {
+      return new PwgError(WS_ERR_INVALID_PARAM, "Invalid status, only public/private");
+    }
+  }
+
+  $update = array(
+    'id' => $params['category_id'],
+    );
+
+  $info_columns = array('name');
 
   $perform_update = false;
   foreach ($info_columns as $key)

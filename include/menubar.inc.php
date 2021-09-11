@@ -315,21 +315,23 @@ function initialize_menu()
     }
 
     // about link
-    $block->data['about'] =
+// CUSTOM BEGIN
+    /*$block->data['about'] =
       array(
         'TITLE'     => l10n('About Piwigo'),
         'NAME'      => l10n('About'),
         'URL' => get_root_url().'about.php',
-      );
+      );*/
 
     // notification
-    $block->data['rss'] =
+    /*$block->data['rss'] =
       array(
         'TITLE'=>l10n('RSS feed'),
         'NAME'=>l10n('Notification'),
         'URL'=> get_root_url().'notification.php',
         'REL'=> 'rel="nofollow"'
-      );
+      );*/
+// CUSTOM END
     $block->template = 'menubar_menu.tpl';
   }
 

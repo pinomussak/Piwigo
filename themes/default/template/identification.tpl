@@ -41,18 +41,18 @@
 
   <p>
     <input type="hidden" name="redirect" value="{$U_REDIRECT|@urlencode}">
-    <input tabindex="4" type="submit" name="login" value="{'Submit'|@translate}">
+    <input class="primary-button" tabindex="4" type="submit" name="login" value="Anmelden"> {* CUSTOM *}
   </p>
 
 	<p>
 {if isset($U_REGISTER)}
-		<a href="{$U_REGISTER}" title="{'Register'|@translate}" class="pwg-state-default pwg-button">
-			<span class="pwg-icon pwg-icon-register">&nbsp;</span><span>{'Register'|@translate}</span>
+		<a href="{$U_REGISTER}" title="{'Register'|@translate}" class="pwg-state-default pwg-button light-button"> {* CUSTOM *}
+			<span>{'Register'|@translate}</span>
 		</a>
 {/if}
 {if isset($U_LOST_PASSWORD)}
-		<a href="{$U_LOST_PASSWORD}" title="{'Forgot your password?'|@translate}" class="pwg-state-default pwg-button">
-			<span class="pwg-icon pwg-icon-lost-password">&nbsp;</span><span>{'Forgot your password?'|@translate}</span>
+		<a href="{$U_LOST_PASSWORD}" title="{'Forgot your password?'|@translate}" class="pwg-state-default pwg-button light-button"> {* CUSTOM *}
+			<span>{'Forgot your password?'|@translate}</span>
 		</a>
 {/if}
 	</p>

@@ -14,6 +14,7 @@ include_once( PHPWG_ROOT_PATH.'include/common.inc.php' );
 // | Check Access and exit when user status is not ok                      |
 // +-----------------------------------------------------------------------+
 check_status(ACCESS_GUEST);
+abort_if_not_approved($user['id']); // CUSTOM
 
 trigger_notify('loc_begin_search');
 

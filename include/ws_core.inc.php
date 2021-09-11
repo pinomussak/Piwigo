@@ -577,7 +577,6 @@ Request format: ".@$this->_requestFormat." Response format: ".@$this->_responseF
         $params[$name] = $the_param;
       }
     }
-    
     if (count($missing_params))
     {
       return new PwgError(WS_ERR_MISSING_PARAM, 'Missing parameters: '.implode(',',$missing_params));

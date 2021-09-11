@@ -11,6 +11,42 @@ define('PHPWG_ROOT_PATH','./');
 include_once( PHPWG_ROOT_PATH.'include/common.inc.php' );
 
 // +-----------------------------------------------------------------------+
+// | Validate Captcha                                                      |
+// +-----------------------------------------------------------------------+
+
+if (isset($_POST['submit']))
+{
+  if (isset($_POST['h-captcha-response']))
+  {
+    $data = array(
+      'secret' => "0xB8088B4fD2E52BE1054608045d8B95bd828433C4",
+      'response' => $_POST['h-captcha-response']
+    );
+
+    $verify = curl_init();
+    curl_setopt($verify, CURLOPT_URL, "https://hcaptcha.com/siteverify");
+    curl_setopt($verify, CURLOPT_POST, true);
+    curl_setopt($verify, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($verify, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($verify);
+
+    $responseData = json_decode($response);
+    if($responseData->success) 
+    {
+      $captcha_validated = true;
+    }
+    else
+    {
+      $captcha_validated = false;
+    }
+  }
+  else
+  {
+    $captcha_validated = false;
+  }
+}
+
+// +-----------------------------------------------------------------------+
 // | Check Access and exit when user status is not ok                      |
 // +-----------------------------------------------------------------------+
 check_status(ACCESS_FREE);
@@ -21,62 +57,76 @@ if (!$conf['allow_user_registration'])
 {
   page_forbidden('User registration closed');
 }
-
-trigger_notify('loc_begin_register');
-
 if (isset($_POST['submit']))
 {
-  if (!verify_ephemeral_key(@$_POST['key']))
+  if (isset($captcha_validated) && $captcha_validated)
   {
-		set_status_header(403);
-    $page['errors'][] = l10n('Invalid/expired form key');
-  }
-
-  if(empty($_POST['password']))
-  {
-    $page['errors'][] = l10n('Password is missing. Please enter the password.');
-  }
-  else if(empty($_POST['password_conf']))
-  {
-    $page['errors'][] = l10n('Password confirmation is missing. Please confirm the chosen password.');
-  }
-  else if ($_POST['password'] != $_POST['password_conf'])
-  {
-    $page['errors'][] = l10n('The passwords do not match');
-  }
-
-  register_user(
-    $_POST['login'],
-    $_POST['password'],
-    $_POST['mail_address'],
-    true,
-    $page['errors'],
-    isset($_POST['send_password_by_mail'])
-    );
-
-  if (count($page['errors']) == 0)
-  {
-    // email notification
-    if (isset($_POST['send_password_by_mail']) and email_check_format($_POST['mail_address']))
+    trigger_notify('loc_begin_register');
+    if (!verify_ephemeral_key(@$_POST['key']))
     {
-      $_SESSION['page_infos'][] = l10n('Successfully registered, you will soon receive an email with your connection settings. Welcome!');
+		  set_status_header(403);
+      $page['errors'][] = l10n('Invalid/expired form key');
     }
-    
-    // log user and redirect
-    $user_id = get_userid($_POST['login']);
-    log_user($user_id, false);
-    redirect(make_index_url());
+
+    if(empty($_POST['password']))
+    {
+      $page['errors'][] = l10n('Password is missing. Please enter the password.');
+    }
+    else if(empty($_POST['password_conf']))
+    {
+      $page['errors'][] = l10n('Password confirmation is missing. Please confirm the chosen password.');
+    }
+    else if ($_POST['password'] != $_POST['password_conf'])
+    {
+      $page['errors'][] = l10n('The passwords do not match');
+    }
+
+    register_user(
+      $_POST['login'],
+      $_POST['password'],
+      $_POST['mail_address'],
+      true,
+      $page['errors'],
+      isset($_POST['send_password_by_mail'])
+      );
+
+    if (count($page['errors']) == 0)
+    {
+      // email notification
+  // CUSTOM BEGIN
+      if (isset($_POST['send_password_by_mail']) and email_check_format($_POST['mail_address']))
+      {
+        $_SESSION['page_infos'][] = l10n('Du hast dich erfolgreich registriert. Du erhältst in Kürze eine E-Mail mit deinen Anmeldedaten. Sobald dich einer der Administratoren händisch freigeschalten hat, kannst du Fotos ansehen und Eigene hochladen.');
+      }
+      else if (email_check_format($_POST['mail_address']))
+      {
+        $_SESSION['page_infos'][] = l10n('Du hast dich erfolgreich registriert. Du erhältst in Kürze eine E-Mail mit deinem Benutzernamen. Sobald dich einer der Administratoren händisch freigeschalten hat, kannst du Fotos ansehen und Eigene hochladen.');
+      }
+  // CUSTOM END
+      // log user and redirect
+      $user_id = get_userid($_POST['login']);
+      log_user($user_id, false);
+      redirect(make_index_url());
+    }
+	  $registration_post_key = get_ephemeral_key(2);
+	  
+	  $login = !empty($_POST['login'])?htmlspecialchars(stripslashes($_POST['login'])):'';
+    $email = !empty($_POST['mail_address'])?htmlspecialchars(stripslashes($_POST['mail_address'])):'';
   }
-	$registration_post_key = get_ephemeral_key(2);
+  else
+  {
+    $registration_post_key = get_ephemeral_key(2);
+    $login = '';
+    $email = '';
+    $page['errors'][] = "Bitte verifiziere, dass du ein Mensch bist.";
+  }
 }
 else
 {
-	$registration_post_key = get_ephemeral_key(6);
+  $registration_post_key = get_ephemeral_key(6);
+  $login = '';
+  $email = '';
 }
-
-$login = !empty($_POST['login'])?htmlspecialchars(stripslashes($_POST['login'])):'';
-$email = !empty($_POST['mail_address'])?htmlspecialchars(stripslashes($_POST['mail_address'])):'';
-
 //----------------------------------------------------- template initialization
 //
 // Start output of page

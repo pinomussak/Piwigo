@@ -69,8 +69,8 @@
 		</a></li>
 {/if}
 {if isset($U_SLIDESHOW)}
-		<li id="cmdSlideshow">{strip}<a href="{$U_SLIDESHOW}" title="{'slideshow'|@translate}" class="pwg-state-default pwg-button" rel="nofollow">
-			<span class="pwg-icon pwg-icon-slideshow"></span><span class="pwg-button-text">{'slideshow'|@translate}</span>
+		<li id="cmdSlideshow">{strip}<a href="{$U_SLIDESHOW}" title="Vollbild-Diashow" class="pwg-state-default pwg-button" rel="nofollow"> {* CUSTOM *}
+			<span class="pwg-icon pwg-icon-slideshow"></span><span class="pwg-button-text">Vollbild-Diashow</span> {* CUSTOM *}
 		</a>{/strip}</li>
 {/if}
 {if isset($U_MODE_FLAT)}
@@ -182,5 +182,12 @@
 {/if}
 
 {if !empty($PLUGIN_INDEX_CONTENT_END)}{$PLUGIN_INDEX_CONTENT_END}{/if}
+<!-- CUSTOM ABOUT PAGE LINK -->
+<p style="display: flex;">
+<a style="margin-left: auto; margin-right: auto; margin-top: 60px; font-size: 1.3em !important;" href="about.php" title="Infos, Tipps und Tricks" class="pwg-state-default pwg-button light-button">
+	<span>Infos, Tipps und Tricks</span>
+</a>
+</p>
+<!-- CUSTOM END -->
 </div>{* <!-- content --> *}
 {if !empty($PLUGIN_INDEX_CONTENT_AFTER)}{$PLUGIN_INDEX_CONTENT_AFTER}{/if}

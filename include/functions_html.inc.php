@@ -185,7 +185,20 @@ function get_cat_display_name_from_id($cat_id, $url = '')
   $cat_info = get_cat_info($cat_id);
   return get_cat_display_name($cat_info['upper_names'], $url);
 }
-
+// CUSTOM BEGIN
+/**
+ * Generates breadcrumb for a category.
+ * @see get_cat_display_name_cache()
+ *
+ * @param int $cat_id
+ * @return string
+ */
+function get_cat_display_name_cache_from_id($cat_id)
+{
+  $cat_info = get_cat_info($cat_id);
+  return get_cat_display_name($cat_info['upper_names'], null);
+}
+// CUSTOM END
 /**
  * Apply basic markdown transformations to a text.
  * newlines becomes br tags
@@ -259,7 +272,6 @@ function tag_alpha_compare($a, $b)
 function access_denied()
 {
   global $user, $conf;
-
   $login_url =
       get_root_url().'identification.php?redirect='
       .urlencode(urlencode($_SERVER['REQUEST_URI']));
@@ -686,8 +698,7 @@ function flush_page_messages()
         $page[$mode] = array_merge($page[$mode], $_SESSION['page_'.$mode]);
         unset($_SESSION['page_'.$mode]);
       }
-
-      if (count($page[$mode]) != 0)
+      if ($page[$mode] != NULL && is_countable($page[$mode]) && count($page[$mode]) != 0) // CUSTOM
       {
         $template->assign($mode, $page[$mode]);
       }

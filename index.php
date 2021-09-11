@@ -111,7 +111,11 @@ if ( empty($page['is_external']) )
 {
   //----------------------------------------------------- template initialization
   $page['body_id'] = 'theCategoryPage';
-  
+  // CUSTOM BEGIN
+  if (isset($page['section']) && $page['section'] != 'categories') {
+      abort_if_not_approved($user['id']);
+  }
+  // CUSTOM END
   if (isset($page['flat']) or isset($page['chronology_field']))
   {
     $template->assign(

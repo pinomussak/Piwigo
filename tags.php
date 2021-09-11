@@ -14,6 +14,7 @@ define('PHPWG_ROOT_PATH','./');
 include_once(PHPWG_ROOT_PATH.'include/common.inc.php');
 
 check_status(ACCESS_GUEST);
+abort_if_not_approved($user['id']); // CUSTOM
 
 trigger_notify('loc_begin_tags');
 

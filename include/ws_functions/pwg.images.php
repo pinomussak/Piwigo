@@ -1017,7 +1017,12 @@ SELECT COUNT(*)
       return new PwgError(404, 'image_id not found');
     }
   }
-
+// CUSTOM BEGIN  
+  if (isset($params['cat_id']) && $params['cat_id'] == 1)
+    {
+      return new PwgError(403, 'adding image to root gallery not allowed');
+    }
+// CUSTOM END
   // does the image already exists ?
   if ($params['check_uniqueness'])
   {
@@ -1195,7 +1200,15 @@ function ws_images_addSimple($params, $service)
     $logger->error(__FUNCTION__ . " " . $message);
     return new PwgError(500, $message);
   }
-
+// CUSTOM BEGIN
+  if (isset($params['category']) and count($params['category']) > 0)
+  {
+  if (in_array('1', $params['category']))
+    {
+      return new PwgError(403, 'adding image to root gallery not allowed');
+    }
+  }
+// CUSTOM END
   if ($params['image_id'] > 0)
   {
     $query='
@@ -1308,13 +1321,27 @@ SELECT id, name, permalink
  */
 function ws_images_upload($params, $service)
 {
-  global $conf;
+  global $conf, $user; // CUSTOM
 
   if (get_pwg_token() != $params['pwg_token'])
   {
     return new PwgError(403, 'Invalid security token');
   }
+// CUSTOM BEGIN  
+  if (isset($params['category']) and count($params['category']) > 0)
+  {
+  if (in_array('1', $params['category']))
+    {
+      return new PwgError(403, 'adding image to root gallery not allowed');
+    }
+  }
 
+  if (!is_admin_or_community_authorized($params['category'][0]))
+  {
+    #error_log('Access denied for user '.$user['id']);
+    return new PwgError(403, 'Not authorized for this album.');
+  }
+// CUSTOM END
   // usleep(100000);
 
   // if (!isset($_FILES['image']))
@@ -1485,12 +1512,21 @@ function ws_images_uploadAsync($params, &$service)
   // build $user
   // include(PHPWG_ROOT_PATH.'include/user.inc.php');
   $user = build_user($user['id'], false);
-
-  if (!is_admin())
+// CUSTOM BEGIN
+  if (!is_admin_or_community_authorized($params['category'][0]))
   {
-    return new PwgError(401, 'Admin status is required.');
+      #error_log('Access denied for user '.$user['id']);
+    return new PwgError(403, 'Not authorized for this album.');
   }
-
+  
+  if (isset($params['category']) and count($params['category']) > 0)
+  {
+  if (in_array('1', $params['category']))
+    {
+      return new PwgError(403, 'Adding image to root gallery not allowed');
+    }
+  }
+// CUSTOM END
   if ($params['image_id'] > 0)
   {
     $query='
@@ -1871,7 +1907,83 @@ SELECT path
 
   return $ret;
 }
+// CUSTOM BEGIN
+/**
+ * API method
+ * Sets details of an image
+ * @param mixed[] $params
+ *    @option int image_id
+ *    @option string name (optional)
+ */
+function ws_images_setTitle($params, $service)
+{
+  global $conf, $user;
 
+  include_once(PHPWG_ROOT_PATH.'admin/include/functions.php');
+  include_once(COMMUNITY_PATH.'include/functions_community.inc.php');
+  
+  if (!is_approved($user['id'])) {
+    return new PwgError(403, 'Not authorized');
+  }
+  
+  $params['name'] = trim($params['name']);
+  if (!preg_match('/[\d\sa-zäöüß]{1,100}/i', $params['name'])) {
+    return new PwgError(400, 'Illegal name');
+  }
+  
+  $query='
+SELECT *
+  FROM '. IMAGES_TABLE .'
+  WHERE id = '. $params['image_id'] .'
+;';
+  $result = pwg_query($query);
+
+  if (pwg_db_num_rows($result) == 0)
+  {
+    return new PwgError(404, 'image_id not found');
+  }
+
+  $image_row = pwg_db_fetch_assoc($result);
+
+  // database registration
+  $update = array();
+
+  $info_columns = array(
+    'name',
+    );
+
+  foreach ($info_columns as $key)
+  {
+    if (isset($params[$key]))
+    {
+      if (!$conf['allow_html_descriptions'])
+      {
+        $params[$key] = strip_tags($params[$key], '<b><strong><em><i>');
+      }
+
+      // TODO do not strip tags if pwg_token is provided (and valid)
+      $params[$key] = strip_tags($params[$key]);
+
+      $update[$key] = $params[$key];
+    }
+  }
+
+  if (count(array_keys($update)) > 0)
+  {
+    $update['id'] = $params['image_id'];
+
+    single_update(
+      IMAGES_TABLE,
+      $update,
+      array('id' => $update['id'])
+      );
+
+    pwg_activity('photo', $update['id'], 'edit');
+  }
+
+  invalidate_user_cache();
+}
+// CUSTOM END
 /**
  * API method
  * Sets details of an image

@@ -16,7 +16,9 @@ if (
   and script_basename() != 'password'       // keep the ability to reset password
   and script_basename() != 'ws'             // keep the ability to discuss with web API
   and script_basename() != 'popuphelp'      // keep the ability to display help popups
-  and (is_a_guest() or is_admin())          // normal users are not concerned by no_photo_yet
+// CUSTOM BEGIN
+  //and (is_a_guest() or is_admin())          // normal users are not concerned by no_photo_yet
+// CUSTOM END
   and !isset($_SESSION['no_photo_yet'])     // temporary hide
   )
 {

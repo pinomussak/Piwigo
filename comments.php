@@ -22,6 +22,7 @@ if (!$conf['activate_comments'])
 // | Check Access and exit when user status is not ok                      |
 // +-----------------------------------------------------------------------+
 check_status(ACCESS_GUEST);
+abort_if_not_approved($user['id']); // CUSTOM
 
 $url_self = PHPWG_ROOT_PATH.'comments.php'
   .get_query_string_diff(array('delete','edit','validate','pwg_token'));

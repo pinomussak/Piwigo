@@ -1,3 +1,61 @@
+{* CUSTOM BEGIN *}
+{combine_script id='jquery.colorbox' load='footer' require='jquery' path='themes/default/js/plugins/jquery.colorbox.min.js'}
+{combine_css path="themes/default/js/plugins/colorbox/style2/colorbox.css"}
+
+{footer_script}
+var rootUrl = "{get_absolute_root_url()}";
+var username = '{$USERNAME}';
+var imageTitle = '{$current.TITLE}';
+var imageId = '{$current.id}';
+{literal}
+jQuery(document).ready(function(){
+
+
+  jQuery(".addAlbumOpen").colorbox({
+    inline:true,
+    href:"#addAlbumForm",
+    onComplete:function(){
+      jQuery("input[name=image_title]").focus();
+      jQuery("input[name=image_title]").val(imageTitle);
+    }
+  });
+
+  jQuery("#addAlbumForm form").submit(function(){
+      jQuery("#categoryNameError").text("");
+
+      jQuery.ajax({
+        url: rootUrl + "ws.php?format=json&method=pwg.images.setTitle",
+        type:"POST",
+        data: {
+          image_id: imageId,
+          name: jQuery("input[name=image_title]").val(),
+        },
+        beforeSend: function() {
+          jQuery("#albumCreationLoading").show();
+        },
+        success:function(html) {
+          jQuery("#albumCreationLoading").hide();
+
+          window.location.reload();
+
+          return true;
+        },
+        error:function(XMLHttpRequest, textStatus, errorThrows) {
+            jQuery("#albumCreationLoading").hide();
+            jQuery("#categoryNameError").text(errorThrows).css("color", "red");
+        }
+      });
+
+      return false;
+  });
+
+{/literal}
+
+var pwg_token = '{$pwg_token}';
+
+});
+{/footer_script}
+{* CUSTOM END *}
 {combine_script id='core.switchbox' load='async' require='jquery' path='themes/default/js/switchbox.js'}
 {if isset($MENUBAR)}{$MENUBAR}{/if}
 <div id="content"{if isset($MENUBAR)} class="contentWithMenu"{/if}>
@@ -7,12 +65,6 @@
 {/if}
 
 {if !empty($PLUGIN_PICTURE_BEFORE)}{$PLUGIN_PICTURE_BEFORE}{/if}
-
-<div id="imageHeaderBar">
-	<div class="browsePath">
-		{$SECTION_TITLE}<span class="browsePathSeparator">{$LEVEL_SEPARATOR}</span><h2>{$current.TITLE}</h2>
-	</div>
-</div>
 
 <div id="imageToolBar">
 <div class="imageNumber">{$PHOTO}</div>
@@ -55,8 +107,8 @@ function changeImgSrc(url,typeSave,typeMap)
 {/strip}
 {/if}
 {strip}{if isset($U_SLIDESHOW_START)}
-	<a href="{$U_SLIDESHOW_START}" title="{'slideshow'|@translate}" class="pwg-state-default pwg-button" rel="nofollow">
-		<span class="pwg-icon pwg-icon-slideshow"></span><span class="pwg-button-text">{'slideshow'|@translate}</span>
+	<a href="{$U_SLIDESHOW_START}" title="Vollbild-Diashow" class="pwg-state-default pwg-button" rel="nofollow"> {* CUSTOM *}
+		<span class="pwg-icon pwg-icon-slideshow"></span><span class="pwg-button-text">Vollbild-Diashow</span> {* CUSTOM *}
 	</a>
 {/if}{/strip}
 {strip}{if isset($U_METADATA)}
@@ -68,6 +120,7 @@ function changeImgSrc(url,typeSave,typeMap)
 	<a id="downloadSwitchLink" href="{$current.U_DOWNLOAD}" title="{'Download this file'|@translate}" class="pwg-state-default pwg-button" rel="nofollow">
 		<span class="pwg-icon pwg-icon-save"></span><span class="pwg-button-text">{'Download'|@translate}</span>
 	</a>
+
 
 {if !empty($current.formats)}
 {footer_script require='jquery'}{literal}
@@ -100,6 +153,14 @@ jQuery().ready(function() {
 		<span class="pwg-icon pwg-icon-representative"></span><span class="pwg-button-text">{'representative'|@translate}</span>
 	</a>
 {/if}{/strip}
+{* CUSTOM BEGIN *}
+		{strip}{if isset($U_SET_AS_REPRESENTATIVE)}
+	<a href="#" class="addAlbumOpen cboxElement pwg-state-default pwg-button" title="Foto Titel ändern">
+	    <span class="pwg-icon pwg-icon-edit"></span>
+	    <span class="pwg-button-text">Titel ändern</span>
+	</a>
+{/if}{/strip}
+{* CUSTOM END *}
 {strip}{if isset($U_PHOTO_ADMIN)}
 	<a id="cmdEditPhoto" href="{$U_PHOTO_ADMIN}" title="{'Edit photo'|@translate}" class="pwg-state-default pwg-button" rel="nofollow">
 		<span class="pwg-icon pwg-icon-edit"></span><span class="pwg-button-text">{'Edit'|@translate}</span>
@@ -127,10 +188,48 @@ y.callService(
 {/if}{/strip}{*caddie management END*}
 </div>
 </div>{*<!-- imageToolBar -->*}
+{* CUSTOM BEGIN *}
+<div id="imageHeaderBar">
+	<div class="browsePath">
+		{$SECTION_TITLE}<span class="browsePathSeparator">{$LEVEL_SEPARATOR}</span>
+		{strip}{if isset($U_SET_AS_REPRESENTATIVE)}
+		<a href="#" class="addAlbumOpen cboxElement pwg-state-default pwg-button" title="Foto Titel ändern">
+		{/if}{/strip}
+		    <h2 id="image-title">{$current.TITLE}</h2>
+		{strip}{if isset($U_SET_AS_REPRESENTATIVE)}
+	    <span class="pwg-icon pwg-icon-edit" style="color:white;"></span>
+	    <span class="pwg-button-text">Titel ändern</span>
+	</a>
+	
+    <div style="display:none">
+      <div id="addAlbumForm" style="text-align:left;padding:1em;">
+        <form>
+          <br>Foto Titel<br>
+          <input name="image_title" type="text">
+          <span id="categoryNameError"></span>
+          <br><br>
+          <input type="submit" value="Speichern"> 
+          <span id="albumCreationLoading" style="display:none"><img src="themes/default/images/ajax-loader-small.gif"></span>
+        </form>
+      </div>
+    </div>
+{/if}{/strip}
+	</div>
+</div>
+{* CUSTOM END*}
 
 <div id="theImageAndInfos">
 <div id="theImage">
-{$ELEMENT_CONTENT}
+{* CUSTOM BEGIN *}
+    {strip}{if isset($U_SLIDESHOW_START)}
+	<!-- <a href="{$U_SLIDESHOW_START}" title="{'slideshow'|@translate}" class="pwg-state-default pwg-button" rel="nofollow"> -->
+	    {/if}{/strip}
+	    {$ELEMENT_CONTENT}
+    {strip}{if isset($U_SLIDESHOW_START)}
+
+	<!-- </a> -->
+{/if}{/strip}
+{* CUSTOM END *}
 
 {if isset($COMMENT_IMG)}
 <p class="imageComment">{$COMMENT_IMG}</p>
@@ -171,6 +270,14 @@ y.callService(
 
 <dl id="standard" class="imageInfoTable">
 {strip}
+{* CUSTOM BEGIN *}
+    {if isset($current.TITLE)}
+	<div id="Title" class="imageInfo">
+		<dt>{'Title'|@translate}</dt>
+		<dd>{$current.TITLE}</dd>
+	</div>
+	{/if}
+{* CUSTOM END *}
 	{if $display_info.author and isset($INFO_AUTHOR)}
 	<div id="Author" class="imageInfo">
 		<dt>{'Author'|@translate}</dt>
@@ -341,10 +448,10 @@ function setPrivacyLevel(id, level){
 {/if}
 </div>
 </div>
-
+<div id="udp-placeholder" style="display:none"></div> {* CUSTOM *}
 {if isset($COMMENT_COUNT)}
 <div id="comments" {if (!isset($comment_add) && ($COMMENT_COUNT == 0))}class="noCommentContent"{else}class="commentContent"{/if}><div id="commentsSwitcher"></div>
-	<h3>{$COMMENT_COUNT|@translate_dec:'%d comment':'%d comments'}</h3>
+	<h3>Kommentare ({$COMMENT_COUNT})</h3> {* CUSTOM *}
 
 	<div id="pictureComments">
 		{if isset($comment_add)}

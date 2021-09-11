@@ -13,6 +13,8 @@ include(PHPWG_ROOT_PATH . 'include/config_default.inc.php');
 @include(PHPWG_ROOT_PATH. 'local/config/config.inc.php');
 defined('PWG_LOCAL_DIR') or define('PWG_LOCAL_DIR', 'local/');
 
+abort_if_not_approved($user['id']); // CUSTOM
+
 $config_file = PHPWG_ROOT_PATH.PWG_LOCAL_DIR.'config/database.inc.php';
 $config_file_contents = @file_get_contents($config_file);
 if ($config_file_contents === false)

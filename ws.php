@@ -178,6 +178,8 @@ function ws_addDefaultMethods( $arr )
                                 'type'=>WS_TYPE_BOOL),
         'fullname' =>     array('default'=>false,
                                 'type'=>WS_TYPE_BOOL),
+        'community_upload' =>     array('default'=>false,
+                                'type'=>WS_TYPE_BOOL), // CUSTOM
         'thumbnail_size' => array(
           'default' => IMG_THUMB,
           'info' => implode(',', array_keys(ImageStdParams::get_defined_type_map()))
@@ -796,7 +798,18 @@ function ws_addDefaultMethods( $arr )
       $ws_functions_root . 'pwg.images.php',
       array('admin_only'=>true, 'post_only'=>true)
     );
-
+// CUSTOM BEGIN
+  $service->addMethod(
+      'pwg.images.setTitle',
+      'ws_images_setTitle',
+      array(
+        'image_id' =>       array('type'=>WS_TYPE_ID),
+        'name' =>           array('default'=>null)
+        ),
+      'Changes title of an image.',
+      $ws_functions_root . 'pwg.images.php'
+    );
+// CUSTOM END
   $service->addMethod(
       'pwg.categories.setInfo',
       'ws_categories_setInfo',

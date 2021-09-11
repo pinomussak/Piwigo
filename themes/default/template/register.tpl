@@ -18,36 +18,36 @@
     <ul>
       <li>
         <span class="property">
-          <label for="login">* {'Username'|@translate}</label>
+          <label for="login">Benutzername</label> {* CUSTOM *}
         </span>
         <input type="text" name="login" id="login" value="{$F_LOGIN}" >
       </li>
       <li>
         <span class="property">
-          <label for="password">* {'Password'|@translate}</label>
+          <label for="password">Passwort</label> {* CUSTOM *}
         </span>
         <input type="password" name="password" id="password" >
       </li>
       <li>
         <span class="property">
-          <label for="password_conf">* {'Confirm Password'|@translate}</label>
+          <label for="password_conf">Passwort bestätigen</label> {* CUSTOM *}
         </span>
         <input type="password" name="password_conf" id="password_conf" >
       </li>
       <li>
         <span class="property">
-          <label for="mail_address">{if $obligatory_user_mail_address}* {/if}{'Email address'|@translate}</label>
+          <label for="mail_address">E-Mail Adresse</label> {* CUSTOM *}
         </span>
         <input type="text" name="mail_address" id="mail_address" value="{$F_EMAIL}" >
-      {if not $obligatory_user_mail_address}
-        ({'useful when password forgotten'|@translate})
-      {/if}
       </li>
       <li>
         <span class="property">
           <label for="send_password_by_mail">{'Send my connection settings by email'|@translate}</label>
         </span>
-        <input type="checkbox" name="send_password_by_mail" id="send_password_by_mail" value="1" checked="checked">
+        <input type="checkbox" name="send_password_by_mail" id="send_password_by_mail" value="1">
+      </li>
+      <li class="captcha-container">
+        <div class="h-captcha" data-sitekey="660c9903-ddf5-49a8-aeae-72fac63fb3ae"></div>
       </li>
     </ul>
 
@@ -56,7 +56,7 @@
   <p class="bottomButtons">
 		<input type="hidden" name="key" value="{$F_KEY}" >
     <input class="submit" type="submit" name="submit" value="{'Register'|@translate}">
-    <input class="submit" type="reset" value="{'Reset'|@translate}">
+    <input class="submit light-button" type="reset" value="{'Reset'|@translate}"> {* CUSTOM *}
   </p>
 
 </form>
@@ -64,6 +64,9 @@
 <script type="text/javascript"><!--
 document.register_form.login.focus();
 //--></script>
+{* CUSTOM BEGIN *}
+<script src='https://www.hCaptcha.com/1/api.js' async defer></script>
+{* CUSTOM END *}
 
 </div> <!-- content -->
 </div> <!-- registerPage -->

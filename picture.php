@@ -13,6 +13,7 @@ include_once(PHPWG_ROOT_PATH.'include/functions_picture.inc.php');
 
 // Check Access and exit when user status is not ok
 check_status(ACCESS_GUEST);
+abort_if_not_approved($user['id']); // CUSTOM
 
 // access authorization check
 if (isset($page['category']))
@@ -293,7 +294,10 @@ DELETE FROM '.FAVORITES_TABLE.'
     }
     case 'set_as_representative' :
     {
-      if (is_admin() and isset($page['category']))
+// CUSTOM BEGIN
+      $user_permissions = $user['community_permissions'];
+      if (is_admin() and isset($page['category']) 
+          or (isset($page['category']) and !in_array($page['category'], $user_permissions['upload_categories'])))
       {
         $query = '
 UPDATE '.CATEGORIES_TABLE.'
@@ -306,6 +310,7 @@ UPDATE '.CATEGORIES_TABLE.'
         include_once(PHPWG_ROOT_PATH.'admin/include/functions.php');
         invalidate_user_cache();
       }
+// CUSTOM END
 
       redirect($url_self);
 
@@ -781,7 +786,7 @@ if ($conf['picture_metadata_icon'])
 //------------------------------------------------------- upper menu management
 
 // admin links
-if (is_admin())
+if (isset($page['category']['id']) && is_admin_or_community_authorized($page['category']['id']))
 {
   if (isset($page['category']) and $conf['picture_representative_icon'])
   {
@@ -793,7 +798,9 @@ if (is_admin())
         )
       );
   }
+}
 
+if (is_admin()) {
   if ($conf['picture_edit_icon'])
   {
     $url_admin =
@@ -839,6 +846,9 @@ SELECT COUNT(*) AS nb_fav
       )
     );
 }
+
+//-------------------------------------------------------------- menubar
+include( PHPWG_ROOT_PATH.'include/menubar.inc.php');
 
 //--------------------------------------------------------- picture information
 // legend

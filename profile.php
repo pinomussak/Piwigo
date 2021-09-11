@@ -20,6 +20,7 @@ if (!defined('PHPWG_ROOT_PATH'))
   // | Check Access and exit when user status is not ok                      |
   // +-----------------------------------------------------------------------+
   check_status(ACCESS_CLASSIC);
+  abort_if_not_approved($user['id']); // CUSTOM
 
   if (!empty($_POST))
   {

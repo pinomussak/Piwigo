@@ -292,6 +292,37 @@ function display_select_cat_wrapper($query,
   display_select_categories($categories, $selecteds, $blockname, $fullname);
 }
 
+// BEGIN CUSTOM
+/**
+ * Same as display_select_categories but categories are ordered by rank and filtered by user name
+ * @see display_select_categories()
+ */
+function display_select_cat_wrapper_filtered($query,
+                                    $selecteds,
+                                    $blockname,
+                                    $user_id,
+                                    $fullname = true)
+{
+  $categories = query2array($query);
+  usort($categories, 'global_rank_compare');
+  $filtered_cats = array();
+  $username = getuserdata($user_id, true)['username'];
+  foreach ($categories as $cat) {
+    $cat_name_elements = explode("/", strip_tags(
+        get_cat_display_name_cache(
+          $cat['uppercats'],
+          null
+          )
+        ));
+    if (isset($cat_name_elements[1]) && strcmp(trim($cat_name_elements[1]), $username) === 0) {
+        array_push($filtered_cats, $cat);
+    }
+  }
+
+  display_select_categories($filtered_cats, $selecteds, $blockname, $fullname);
+}
+// END CUSTOM
+
 /**
  * Returns all subcategory identifiers of given category ids
  *
